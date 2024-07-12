@@ -4,6 +4,31 @@ This is the code used in the paper [The More is not the Merrier: Investigating t
 
 We have added code to experiments.py and utils.py to accomadate our Knowledgeable Client Insertion (KCI) and simple model aggregation.
 
+## Using this repository
+We recommend downloading anaconda and creating an environment before downloading packages. 
+
+The code can be easily run by using the following command :
+
+python experiments.py --model=simple-cnn \
+    --dataset=cifar10 \
+    --alg=fedavg \
+    --lr=0.01 \
+    --batch-size=64 \
+    --epochs=5 \
+    --n_parties=10 \
+    --m=1 \
+    --lambda_value=1 \ 
+    --rho=0.9 \
+    --comm_round=50 \
+    --partition=homo \
+    --beta=0.5\
+    --device='cuda:0'\
+    --datadir='./data/' \
+    --logdir='./logs/' \
+    --noise=0 \
+    --sample=1 \
+    --init_seed=0
+
 
 This code is adapted from the code for the following paper : [Federated Learning on Non-IID Data Silos: An Experimental Study](https://arxiv.org/pdf/2102.02079.pdf).
 
