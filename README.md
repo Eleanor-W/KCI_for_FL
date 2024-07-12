@@ -7,6 +7,8 @@ We have added code to experiments.py and utils.py to accomadate our Knowledgeabl
 ## Using this repository
 We recommend downloading anaconda and creating an environment before downloading packages. 
 
+The requirements.txt file lists required packages and versions.
+
 The code can be easily run by using the following command :
 
 python experiments.py --model=simple-cnn \
@@ -21,7 +23,6 @@ python experiments.py --model=simple-cnn \
     --rho=0.9 \
     --comm_round=50 \
     --partition=homo \
-    --beta=0.5\
     --device='cuda:0'\
     --datadir='./data/' \
     --logdir='./logs/' \
@@ -47,28 +48,6 @@ This code runs a benchmark for federated learning algorithms under non-IID data 
 * While the data distribution may still be consistent amongthe parties, the size of local dataset varies according to Dirichlet distribution.
 
 ## Usage
-Here is one example to run this code:
-```
-python experiments.py --model=simple-cnn \
-    --dataset=cifar10 \
-    --alg=fedavg \
-    --lr=0.01 \
-    --batch-size=64 \
-    --epochs=5 \
-    --n_parties=10 \
-    --m=1 \
-    --lambda_value=1 \ 
-    --rho=0.9 \
-    --comm_round=50 \
-    --partition=homo \
-    --beta=0.5\
-    --device='cuda:0'\
-    --datadir='./data/' \
-    --logdir='./logs/' \
-    --noise=0 \
-    --sample=1 \
-    --init_seed=0
-```
 
 | Parameter                      | Description                                 |
 | ----------------------------- | ---------------------------------------- |
@@ -92,8 +71,6 @@ python experiments.py --model=simple-cnn \
 | `noise` | Maximum variance of Gaussian noise we add to local party, default = `0`. |
 | `sample` | Ratio of parties that participate in each communication round, default = `1`. |
 | `init_seed` | The initial seed, default = `0`. |
-
-
 
 
 ## Data Partition Map
