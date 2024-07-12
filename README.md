@@ -1,38 +1,14 @@
-# NIID-Bench
+# FedAvgKCI
 
-[![paper](https://img.shields.io/badge/PAPER-arXiv-yellowgreen?style=for-the-badge)](https://arxiv.org/pdf/2102.02079.pdf)
-&nbsp;&nbsp;&nbsp;
-[![paper](https://img.shields.io/badge/leaderboard-5%2B%20Methods-228c22?style=for-the-badge)](https://niidbench.xtra.science/)
-&nbsp;&nbsp;&nbsp;
+This is the code used in the paper [The More is not the Merrier: Investigating the Effect of Client Size on Federated Learning].
 
-This is the code of paper [Federated Learning on Non-IID Data Silos: An Experimental Study](https://arxiv.org/pdf/2102.02079.pdf).
+We have added code to experiments.py and utils.py to accomadate our Knowledgeable Client Insertion (KCI) and simple model aggregation.
+
+
+This code is adapted from the code for the following paper : [Federated Learning on Non-IID Data Silos: An Experimental Study](https://arxiv.org/pdf/2102.02079.pdf).
 
 
 This code runs a benchmark for federated learning algorithms under non-IID data distribution scenarios. Specifically, we implement 4 federated learning algorithms (FedAvg, FedProx, SCAFFOLD & FedNova), 3 types of non-IID settings (label distribution skew, feature distribution skew & quantity skew) and 9 datasets (MNIST, Cifar-10, Fashion-MNIST, SVHN, Generated 3D dataset, FEMNIST, adult, rcv1, covtype).
-
-
-## Updates on NIID-Bench
-Our follow-up works based on NIID-Bench:
-
-* [FedOV](https://github.com/Xtra-Computing/FedOV): Towards Addressing Label Skews in One-Shot Federated Learning (ICLR 2023)
-
-* [FedConcat](https://github.com/sjtudyq/FedConcat): Exploiting Label Skew in Federated Learning with Model Concatenation (AAAI 2024)
-
-We publish NIID-Bench challenge https://niidbench.xtra.science, a benchmark to compare federated learning algorithms on comprehensive non-IID data settings. Researchers are welcome to test their algorithms on these settings, upload their codes and participate in our leaderboard!
-
-Implement `partition.py` to divide tabular datasets (csv format) into multiple files using our non-IID partitioning strategies. Column `Class` in the header is recognized as label. See an running example in `partition_to_file.sh`. The example dataset is [Credit Card Fraud Detection](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud).
-
-To adapt to your own tabular dataset in ​``partition.py``, you need the following steps:
-
-1. Load your own dataset in arrays. Replace Line 117-126.  
-2. The whole tabular dataset is stored in ​``dataset​​``. The label column ID is stored in ``class_id​​``. Change Line 130 to your own label identifier. 
-
-If your dataset is image dataset, ``partition.py​​`` is no longer applicable. You can refer to our function ``partition_data​​`` in ``utils.py``. You need to design your own dataloader like Line 183-198. For example, in load_mnist_data (Line 40), you need to write a dataloader to return your dataset as tuple (X_train, y_train, X_test, y_test). In terms of the dataloader format, you can refer to class ``MNIST_truncated​​`` (Line 60 in ``dataset.py``). After you get (X_train, y_train, X_test, y_test), the ``partition_data`` function will return the ​``net_dataidx_map``​.
-
-To support more settings and faciliate future researches, we now integrate MOON. We add CIFAR-100 and Tiny-ImageNet. 
-
-###  Tiny-ImageNet
-You can download Tiny-ImageNet [here](http://cs231n.stanford.edu/tiny-imagenet-200.zip). Then, you can follow the [instructions](https://github.com/AI-secure/DBA/blob/master/utils/tinyimagenet_reformat.py) to reformat the validation folder. 
 
 ## Non-IID Settings
 ### Label Distribution Skew
@@ -45,22 +21,21 @@ You can download Tiny-ImageNet [here](http://cs231n.stanford.edu/tiny-imagenet-2
 ### Quantity Skew
 * While the data distribution may still be consistent amongthe parties, the size of local dataset varies according to Dirichlet distribution.
 
-
-
 ## Usage
 Here is one example to run this code:
 ```
 python experiments.py --model=simple-cnn \
     --dataset=cifar10 \
-    --alg=fedprox \
+    --alg=fedavg \
     --lr=0.01 \
     --batch-size=64 \
-    --epochs=10 \
+    --epochs=5 \
     --n_parties=10 \
-    --mu=0.01 \
+    --m=1 \
+    --lambda_value=1 \ 
     --rho=0.9 \
     --comm_round=50 \
-    --partition=noniid-labeldir \
+    --partition=homo \
     --beta=0.5\
     --device='cuda:0'\
     --datadir='./data/' \
@@ -79,6 +54,8 @@ python experiments.py --model=simple-cnn \
 | `batch-size` | Batch size, default = `64`. |
 | `epochs` | Number of local training epochs, default = `5`. |
 | `n_parties` | Number of parties, default = `2`. |
+| `m` | Number of artifical clients added to system, default = `0`. |
+| `lambda_value` | Proportion of training dataset artifical clients recieve, default = `1`. |
 | `mu` | The proximal term parameter for FedProx, default = `0.001`. |
 | `rho` | The parameter controlling the momentum SGD, default = `0`. |
 | `comm_round`    | Number of communication rounds to use, default = `50`. |
@@ -90,6 +67,7 @@ python experiments.py --model=simple-cnn \
 | `noise` | Maximum variance of Gaussian noise we add to local party, default = `0`. |
 | `sample` | Ratio of parties that participate in each communication round, default = `1`. |
 | `init_seed` | The initial seed, default = `0`. |
+
 
 
 
@@ -115,119 +93,3 @@ Here is explanation of parameter for function `get_partition_dict()`.
 | `logdir` | The path to store the logs. |
 | `beta` | The concentration parameter of the Dirichlet distribution for heterogeneous partition. |
 
-## Leader Board
-
-Note that the accuracy shows the average of three experiments, while the training curve is based on only one experiment. Thus, there may be some difference. We show the training curve to compare convergence rate of different algorithms.
-
-### Quantity-based label imbalance
-* Cifar-10, 10 parties, sample rate = 1, batch size = 64, learning rate = 0.01
-
-| Partition                                 | Model     | Round                       | Algorithm | Accuracy |
-| --------------|--------------- | -------------- | ------------ | -------------- | 
-| `noniid-#label2` | `simple-cnn` |50| FedProx (`mu=0.01`) | 50.7% |
-| `noniid-#label2` | `simple-cnn` |50| FedAvg | 49.8% |
-| `noniid-#label2` | `simple-cnn` |50| SCAFFOLD | 49.1% |
-| `noniid-#label2` | `simple-cnn` |50| FedNova | 46.5% |
-
-<img src="figures/10parties/cifar10-noniid-label2.png" width="315" height="200" /><br/>
-
-
-* Cifar-10, 100 parties, sample rate = 0.1, batch size = 64, learning rate = 0.01
-
-| Partition                                 | Model     | Round                       | Algorithm | Accuracy |
-| --------------|--------------- | -------------- | ------------ | -------------- | 
-| `noniid-#label2` | `simple-cnn` |500| FedNova | 48.0% |
-| `noniid-#label2` | `simple-cnn` |500| FedAvg | 45.3% |
-| `noniid-#label2` | `simple-cnn` |500| FedProx (`mu=0.001`) | 39.3% |
-| `noniid-#label2` | `simple-cnn` |500| SCAFFOLD | 10.0% |
-
-<img src="figures/100parties/cifar10-lb2.png" width="315" height="200" /><br/>
-
-### Distribution-based label imbalance
-* Cifar-10, 10 parties, sample rate = 1, batch size = 64, learning rate = 0.01
-
-| Partition                                 | Model     | Round                       | Algorithm | Accuracy |
-| --------------|--------------- | -------------- | ------------ | -------------- | 
-| `noniid-labeldir` with `beta=0.5` | `simple-cnn` |50| SCAFFOLD | 69.8% |
-| `noniid-labeldir` with `beta=0.5` | `simple-cnn` |50| FedAvg | 68.2% |
-| `noniid-labeldir` with `beta=0.5` | `simple-cnn` |50| FedProx (`mu=0.001`) | 67.9% |
-| `noniid-labeldir` with `beta=0.5` | `simple-cnn` |50| FedNova | 66.8% |
-
-<img src="figures/10parties/cifar10-noniid-labeldir.png" width="315" height="200" /><br/>
-
-| Partition                                 | Model     | Round                       | Algorithm | Accuracy |
-| --------------|--------------- | -------------- | ------------ | -------------- | 
-| `noniid-labeldir` with `beta=0.1` | `vgg` |100| SCAFFOLD | 85.5% |
-| `noniid-labeldir` with `beta=0.1` | `vgg` |100| FedNova | 84.4% |
-| `noniid-labeldir` with `beta=0.1` | `vgg` |100| FedProx (`mu=0.01`) | 84.4% |
-| `noniid-labeldir` with `beta=0.1` | `vgg` |100| FedAvg | 84.0% |
-
-<img src="figures/heavy-model/vgg-lbdir.png" width="315" height="200" /><br/>
-
-* Cifar-10, 100 parties, sample rate = 0.1, batch size = 64, learning rate = 0.01
-
-| Partition                                 | Model     | Round                       | Algorithm | Accuracy |
-| --------------|--------------- | -------------- | ------------ | -------------- | 
-| `noniid-labeldir` with `beta=0.5` | `simple-cnn` |500| FedNova | 60.0% |
-| `noniid-labeldir` with `beta=0.5` | `simple-cnn` |500| FedAvg | 59.4% |
-| `noniid-labeldir` with `beta=0.5` | `simple-cnn` |500| FedProx (`mu=0.001`) | 58.8% |
-| `noniid-labeldir` with `beta=0.5` | `simple-cnn` |500| SCAFFOLD | 10.0% |
-
-<img src="figures/100parties/cifar10-lbdir.png" width="315" height="200" /><br/>
-
-### Noise-based feature imbalance
-* Cifar-10, 10 parties, sample rate = 1, batch size = 64, learning rate = 0.01
-
-| Partition                                 | Model     | Round                       | Algorithm | Accuracy |
-| --------------|--------------- | -------------- | ------------ | -------------- | 
-| `homo` with `noise=0.1` | `simple-cnn` |50| SCAFFOLD | 70.1% |
-| `homo` with `noise=0.1` | `simple-cnn` |50| FedProx (`mu=0.01`) | 69.3% |
-| `homo` with `noise=0.1` | `simple-cnn` |50| FedAvg | 68.9% |
-| `homo` with `noise=0.1` | `simple-cnn` |50| FedNova | 68.5% |
-
-<img src="figures/10parties/cifar10-noise.png" width="315" height="200" /><br/>
-
-| Partition                                 | Model     | Round                       | Algorithm | Accuracy |
-| --------------|--------------- | -------------- | ------------ | -------------- | 
-| `homo` with `noise=0.1` | `resnet` |100| SCAFFOLD | 90.2% |
-| `homo` with `noise=0.1` | `resnet` |100| FedNova | 89.4% |
-| `homo` with `noise=0.1` | `resnet` |100| FedProx (`mu=0.01`) | 89.2% |
-| `homo` with `noise=0.1` | `resnet` |100| FedAvg | 89.1% |
-
-<img src="figures/heavy-model/resnet-noise.png" width="315" height="200" /><br/>
-
-### Quantity Skew
-* Cifar-10, 10 parties, sample rate = 1, batch size = 64, learning rate = 0.01
-
-| Partition                                 | Model     | Round                       | Algorithm | Accuracy |
-| --------------|--------------- | -------------- | ------------ | -------------- | 
-| `iid-diff-quantity` with `beta=0.5` | `simple-cnn` |50| FedAvg | 72.0% |
-| `iid-diff-quantity` with `beta=0.5` | `simple-cnn` |50| FedProx (`mu=0.01`) | 71.2% |
-| `iid-diff-quantity` with `beta=0.5` | `simple-cnn` |50| SCAFFOLD | 62.4% |
-| `iid-diff-quantity` with `beta=0.5` | `simple-cnn` |50| FedNova | 10.0% |
-
-<img src="figures/10parties/cifar10-iid-diff-quantity.png" width="315" height="200" /><br/>
-
-### IID Setting
-* Cifar-10, 100 parties, sample rate = 0.1, batch size = 64, learning rate = 0.01
-
-| Partition                                 | Model     | Round                       | Algorithm | Accuracy |
-| --------------|--------------- | -------------- | ------------ | -------------- | 
-|`homo`| `simple-cnn` |500| FedNova | 66.1% |
-|`homo`| `simple-cnn` |500| FedProx (`mu=0.01`) | 66.0% |
-|`homo`| `simple-cnn` |500| FedAvg | 65.6% |
-|`homo`| `simple-cnn` |500| SCAFFOLD | 10.0% |
-
-<img src="figures/100parties/cifar10-homo.png" width="315" height="200" /><br/>
-
-## Citation
-If you find this repository useful, please cite our paper:
-
-```
-@inproceedings{li2022federated,
-      title={Federated Learning on Non-IID Data Silos: An Experimental Study},
-      author={Li, Qinbin and Diao, Yiqun and Chen, Quan and He, Bingsheng},
-      booktitle={IEEE International Conference on Data Engineering},
-      year={2022}
-}
-```
