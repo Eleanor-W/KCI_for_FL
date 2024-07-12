@@ -176,7 +176,7 @@ def record_net_data_stats(y_train, net_dataidx_map, logdir):
 
     return net_cls_counts
 
-def partition_data(dataset, datadir, logdir, partition, n_parties, m, beta=0.4):
+def partition_data(dataset, datadir, logdir, partition, n_parties, m, lambda_value, beta=0.4):
     #np.random.seed(2020)
     #torch.manual_seed(2020)
 
@@ -298,9 +298,11 @@ def partition_data(dataset, datadir, logdir, partition, n_parties, m, beta=0.4):
         idxs = np.random.permutation(n_train)
         batch_idxs = np.array_split(idxs, n_parties)
         net_dataidx_map = {i: batch_idxs[i] for i in range(n_parties)}
+
+        new_data = np.array_split(idxs,(1/lambda_value))
         for i in range(m) :
-            print('party number : ', i + n_parties)
-            net_dataidx_map[i+n_parties]=idxs
+            local_data = random.choice(new_data)
+            net_dataidx_map[i+n_parties]=local_data
 
 
     elif partition == "noniid-labeldir":

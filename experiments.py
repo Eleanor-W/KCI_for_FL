@@ -55,7 +55,8 @@ def get_args():
     parser.add_argument('--noise_type', type=str, default='level', help='Different level of noise or different space of noise')
     parser.add_argument('--rho', type=float, default=0, help='Parameter controlling the momentum SGD')
     parser.add_argument('--sample', type=float, default=1, help='Sample ratio for each communication round')
-    parser.add_argument('--m', type=int, default=0, help='number of artifical client')
+    parser.add_argument('--m', type=int, default=0, help='number of artifical clients')
+    parser.add_argument('--lambda_value', type=int, default=1, help='proportion of training dataset given to artifical clients')
     args = parser.parse_args()
     return args
 
@@ -830,7 +831,7 @@ if __name__ == '__main__':
     random.seed(seed)
     logger.info("Partitioning data")
     X_train, y_train, X_test, y_test, net_dataidx_map, traindata_cls_counts = partition_data(
-        args.dataset, args.datadir, args.logdir, args.partition, args.n_parties, args.m, beta=args.beta)
+        args.dataset, args.datadir, args.logdir, args.partition, args.n_parties, args.m, args.lambda_value, beta=args.beta)
 
     n_classes = len(np.unique(y_train))
 
@@ -903,7 +904,7 @@ if __name__ == '__main__':
             # local_train_net(nets, args, net_dataidx_map, local_split=False, device=device)
 
             # update global model
-
+            """ #Model Aggregation for KCI1
             total_data_points_arr = [len(net_dataidx_map[r]) for r in range(len(selected))]
             max_idx = []
             max_value = total_data_points_arr[0]
@@ -919,6 +920,18 @@ if __name__ == '__main__':
             fed_avg_freqs = [len(net_dataidx_map[r]) / total_data_points for r in selected]
             for idx in range(len(selected)):
                 net_para = nets[chosen_idx].cpu().state_dict()
+                if idx == 0:
+                    for key in net_para:
+                        global_para[key] = net_para[key] * fed_avg_freqs[idx]
+                else:
+                    for key in net_para:
+                        global_para[key] += net_para[key] * fed_avg_freqs[idx]
+            global_model.load_state_dict(global_para)
+            """
+            total_data_points = sum([len(net_dataidx_map[r]) for r in selected])
+            fed_avg_freqs = [len(net_dataidx_map[r]) / total_data_points for r in selected]
+            for idx in range(len(selected)) :
+                net_para = nets[selected[idx]].cpu().state_dict()
                 if idx == 0:
                     for key in net_para:
                         global_para[key] = net_para[key] * fed_avg_freqs[idx]
