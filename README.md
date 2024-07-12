@@ -9,7 +9,7 @@ We recommend downloading anaconda and creating an environment before downloading
 
 The requirements.txt file lists required packages and versions.
 
-The code can be easily run by using the following command :
+The code can be easily run by using the following command and changing parameters as needed :
 
 python experiments.py --model=simple-cnn \
     --dataset=cifar10 \
@@ -29,6 +29,11 @@ python experiments.py --model=simple-cnn \
     --noise=0 \
     --sample=1 \
     --init_seed=0
+
+For our paper, we looked at different values for : 
+    n_parties = 10,20,100
+    lambda_value = 1,0.5,0.25,0.1
+
 
 
 This code is adapted from the code for the following paper : [Federated Learning on Non-IID Data Silos: An Experimental Study](https://arxiv.org/pdf/2102.02079.pdf).
